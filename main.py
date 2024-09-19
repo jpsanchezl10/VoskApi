@@ -86,26 +86,29 @@ def authenticate(headers):
         return token == VOSK_API_KEY
     return False
 
-async def server(websocket, path):
-    if not authenticate(websocket.request_headers):
-        await websocket.close(1008, "Invalid API key")
-        return
-    
-    language = path.split('=')[-1]
-    if language not in models:
-        await websocket.send(json.dumps({"error": "Unsupported language"}))
-        return
+async def handle_connection(websocket, path):
+    try:
+        if not authenticate(websocket.request_headers):
+            await websocket.close(1008, "Invalid API key")
+            return
 
-    connection = VoskConnection(websocket, language)
-    await connection.start()
+        language = path.split('=')[-1]
+        if language not in models:
+            await websocket.send(json.dumps({"error": "Unsupported language"}))
+            return
+
+        connection = VoskConnection(websocket, language)
+        await connection.start()
+    except Exception as e:
+        logger.error(f"Error in handle_connection function: {str(e)}")
 
 
 async def main():
     try:
         server = await websockets.serve(
-            server, 
+            handle_connection,
             "0.0.0.0",  # Listen on all available interfaces
-            80, 
+            80,
             ping_interval=30,
             ping_timeout=300,  # Increased timeout for long-running connections
             max_size=10 * 1024 * 1024,  # 10MB max message size
@@ -116,15 +119,16 @@ async def main():
         # Keep the server running indefinitely
         await asyncio.Future()
     except Exception as e:
-        logger.error(f"Error starting server: {str(e)}")
-    finally:
-        # Graceful shutdown
-        server.close()
-        await server.wait_closed()
-        logger.info("Server shut down")
+        logger.error(f"Error in server: {str(e)}")
+        # Here we're not closing the server, just logging the error
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Server stopped by user")
+    while True:
+        try:
+            asyncio.run(main())
+        except KeyboardInterrupt:
+            logger.info("Server stopped by user")
+            break
+        except Exception as e:
+            logger.error(f"Server crashed with error: {str(e)}")
+            logger.info("Restarting server in 5 seconds...")
