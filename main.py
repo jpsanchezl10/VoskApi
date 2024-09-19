@@ -4,6 +4,8 @@ import json
 import vosk
 import os
 from collections import defaultdict
+from dotenv import load_dotenv
+load_dotenv()
 
 # Load models
 VOSK_MODEL_PATH_EN = './vosk-model-small-en-us-0.15'
@@ -17,7 +19,7 @@ models = {
     'es': model_es
 }
 
-API_KEY = "your_api_key_here"
+VOSK_API_KEY = os.getenv("VOSK_API_KEY")
 
 class VoskConnection:
     def __init__(self, websocket, language):
@@ -75,7 +77,7 @@ def authenticate(headers):
     token = headers.get('Authorization')
     if token:
         token = token.split()[-1]  # Extract token from "Token API_KEY"
-        return token == API_KEY
+        return token == VOSK_API_KEY
     return False
 
 async def server(websocket, path):
