@@ -27,7 +27,17 @@ async def recognize_audio(websocket, path):
             await websocket.send(json.dumps({"error": "Unsupported language"}))
             return
 
+
         rec = vosk.KaldiRecognizer(models[language], 16000)
+
+        rec.SetMaxAlternatives(1)
+        rec.SetWords(False)
+
+        # rec.SetGrammar(json.dumps({
+        #     "sil_threshold": 0.2,
+        #     "sil_timeout": 0.3,
+        # }))
+
         
         async for message in websocket:
             audio_data = message
