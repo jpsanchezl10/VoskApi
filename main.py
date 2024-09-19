@@ -51,7 +51,7 @@ async def recognize_audio(websocket, path):
                 response = {
                     "duration": 0.0,
                     "start": 0.0,
-                    "is_final": True,
+                    "is_final": False,
                     "speech_final": False,
                     "channel": {
                         "alternatives": [
@@ -81,7 +81,7 @@ async def server(websocket, path):
     
     await recognize_audio(websocket, path)
 
-start_server = websockets.serve(server, "localhost", 8765)
+start_server = websockets.serve(server, "localhost", 80)
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
