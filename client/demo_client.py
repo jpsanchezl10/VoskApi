@@ -2,7 +2,12 @@ import asyncio
 import pyaudio
 import json
 from vosk_bridge import VoskBridge, run_bridge
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
+
+VOSK_API_KEY = os.getenv("VOSK_API_KEY")
 
 # Audio parameters
 CHUNK = 1024
@@ -14,7 +19,7 @@ class VoskClient:
     def __init__(self):
         self.uri = "ws://localhost:80/v1/language=en"
         self.extra_headers = {
-            'Authorization': 'Token your_api_key_here'
+            'Authorization': f'Token {VOSK_API_KEY}'
         }
         self.bridge = None
 
@@ -28,9 +33,11 @@ class VoskClient:
             print("Final: ", sentence)
             print(confidence)
         else:
-            print(f"Interim: ", sentence)
-
+            #print(f"Interim: ", sentence)
+            ...
+    #!Use gather to start on message and start()
     async def start(self):
+
         self.bridge = VoskBridge(self.uri, self.extra_headers, self.on_message)
         await run_bridge(self.bridge)
 

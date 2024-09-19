@@ -5,7 +5,13 @@ import vosk
 import os
 from collections import defaultdict
 from dotenv import load_dotenv
+import logging
 load_dotenv()
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # Load models
 VOSK_MODEL_PATH_EN = './vosk-model-small-en-us-0.15'
@@ -94,7 +100,31 @@ async def server(websocket, path):
     await connection.start()
 
 
-start_server = websockets.serve(server, "localhost", 80)
+async def main():
+    try:
+        server = await websockets.serve(
+            server, 
+            "0.0.0.0",  # Listen on all available interfaces
+            80, 
+            ping_interval=30,
+            ping_timeout=300,  # Increased timeout for long-running connections
+            max_size=10 * 1024 * 1024,  # 10MB max message size
+            max_queue=1000  # Limit the connection queue
+        )
+        logger.info("Server started")
+        
+        # Keep the server running indefinitely
+        await asyncio.Future()
+    except Exception as e:
+        logger.error(f"Error starting server: {str(e)}")
+    finally:
+        # Graceful shutdown
+        server.close()
+        await server.wait_closed()
+        logger.info("Server shut down")
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user")
