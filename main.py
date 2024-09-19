@@ -19,63 +19,56 @@ models = {
 
 API_KEY = "your_api_key_here"
 
-async def recognize_audio(websocket, path):
-    try:
-        # Extract language from path
-        language = path.split('=')[-1]
-        if language not in models:
-            await websocket.send(json.dumps({"error": "Unsupported language"}))
-            return
+class VoskConnection:
+    def __init__(self, websocket, language):
+        self.websocket = websocket
+        self.rec = vosk.KaldiRecognizer(models[language], 16000)
+        self.rec.SetMaxAlternatives(1)
+
+    async def start(self):
+        try:
+            async for message in self.websocket:
+                audio_data = message
+                if self.rec.AcceptWaveform(audio_data):
+                    result = json.loads(self.rec.Result())
 
 
-        rec = vosk.KaldiRecognizer(models[language], 16000)
+                    alternatives = result.get("alternatives", [])
 
-        rec.SetMaxAlternatives(1)
-        rec.SetWords(False)
+                    transcript = alternatives[0].get("text", "") if alternatives else ""
+                    confidence = alternatives[0].get("confidence", 0) if alternatives else 0
 
-        # rec.SetGrammar(json.dumps({
-        #     "sil_threshold": 0.2,
-        #     "sil_timeout": 0.3,
-        # }))
-
-        
-        async for message in websocket:
-            audio_data = message
-            if rec.AcceptWaveform(audio_data):
-                result = json.loads(rec.Result())
-                response = {
-                    "duration": result.get("duration", 0.0),
-                    "start": result.get("start", 0.0),
-                    "is_final": True,
-                    "speech_final": True,
-                    "channel": {
-                        "alternatives": [
-                            {
-                                "transcript": result["text"]
+                    if transcript:
+                        response = {
+                            "duration": result.get("duration", 0.0),
+                            "start": result.get("start", 0.0),
+                            "is_final": True,
+                            "speech_final": True,
+                            "channel": {
+                                "alternatives": [
+                                    {"transcript": transcript, "confidence": confidence}
+                                ]
                             }
-                        ]
+                        }
+
+                else:
+                    partial = json.loads(self.rec.PartialResult())
+                    response = {
+                        "duration": 0.0,
+                        "start": 0.0,
+                        "is_final": False,
+                        "speech_final": False,
+                        "channel": {
+                            "alternatives": [
+                                {"transcript": partial.get("partial", ""), "confidence": 0}
+                            ]
+                        }
                     }
-                }
-            else:
-                partial = json.loads(rec.PartialResult())
-                response = {
-                    "duration": 0.0,
-                    "start": 0.0,
-                    "is_final": False,
-                    "speech_final": False,
-                    "channel": {
-                        "alternatives": [
-                            {
-                                "transcript": partial["partial"]
-                            }
-                        ]
-                    }
-                }
-            
-            await websocket.send(json.dumps(response))
-    
-    except websockets.exceptions.ConnectionClosed:
-        print("WebSocket connection closed")
+                await self.websocket.send(json.dumps(response))
+        except websockets.exceptions.ConnectionClosed:
+            print("WebSocket connection closed")
+
+
 
 def authenticate(headers):
     token = headers.get('Authorization')
@@ -89,7 +82,14 @@ async def server(websocket, path):
         await websocket.close(1008, "Invalid API key")
         return
     
-    await recognize_audio(websocket, path)
+    language = path.split('=')[-1]
+    if language not in models:
+        await websocket.send(json.dumps({"error": "Unsupported language"}))
+        return
+
+    connection = VoskConnection(websocket, language)
+    await connection.start()
+
 
 start_server = websockets.serve(server, "localhost", 80)
 
