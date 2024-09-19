@@ -39,6 +39,7 @@ class VoskConnection:
                     confidence = alternatives[0].get("confidence", 0) if alternatives else 0
 
                     if transcript:
+                        print(transcript)
                         response = {
                             "duration": result.get("duration", 0.0),
                             "start": result.get("start", 0.0),
