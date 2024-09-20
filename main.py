@@ -3,7 +3,6 @@ import websockets
 import json
 import vosk
 import os
-from collections import defaultdict
 from dotenv import load_dotenv
 import logging
 load_dotenv()
