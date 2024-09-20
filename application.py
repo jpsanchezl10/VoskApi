@@ -1,11 +1,10 @@
-import asyncio
-import json
 import os
 import logging
 from fastapi import FastAPI, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import websockets
-import vosk
+import uvicorn
+from fastapi import FastAPI, WebSocket, Request, Form, Response,HTTPException, Header
+
 from dotenv import load_dotenv
 from src.vosk_server.vosk_server import VoskConnection
 
@@ -64,6 +63,23 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"Error in websocket_endpoint: {str(e)}")
         await websocket.close()
 
+
+@application.get("/")
+def ELB_HealthChecker(request: Request, response: Response):
+    try:
+        client_ip = request.client.host
+        attacker_ip = request.headers.get("x-forwarded-for",client_ip)
+        attacker_user_agent = request.headers.get("user-agent","Unknown")
+        message = {
+            "detail":"Not Found",
+            "detected_ip":attacker_ip,
+            "detected_agent":attacker_user_agent,
+            "Intruder message":"IP And user agent have been reported to admin"
+        }
+        return message
+    except:
+        logging.error("ERROR")
+        raise HTTPException(status_code=500,detail="ERROR")
 
 if __name__ == '__main__':
     import uvicorn
