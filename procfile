@@ -1,1 +1,0 @@
-web: gunicorn application:application --workers=${WEB_WORKERS:-1} --worker-class=uvicorn.workers.UvicornWorker
