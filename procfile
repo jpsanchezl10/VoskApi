@@ -1,1 +1,1 @@
-web: python3 -m uvicorn application:application --workers=${WEB_WORKERS:-1}
+web: gunicorn application:application --workers=${WEB_WORKERS:-1} --worker-class=uvicorn.workers.UvicornWorker
