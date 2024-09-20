@@ -108,7 +108,7 @@ async def main():
         server = await websockets.serve(
             handle_connection,
             "0.0.0.0",  # Listen on all available interfaces
-            80,
+            8000,
             ping_interval=30,
             ping_timeout=300,  # Increased timeout for long-running connections
             max_size=10 * 1024 * 1024,  # 10MB max message size
