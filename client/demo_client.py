@@ -17,7 +17,7 @@ RATE = 16000
 
 class VoskClient:
     def __init__(self):
-        self.uri = "ws://192.168.0.129/v1?language=en"
+        self.uri = "ws://localhost/v1?language=en"
         self.extra_headers = {
             'Authorization': f'Token {VOSK_API_KEY}'
         }
