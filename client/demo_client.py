@@ -35,7 +35,7 @@ class VoskClient:
         else:
             #print(f"Interim: ", sentence)
             ...
-    #!Use gather to start on message and start()
+
     async def start(self):
 
         self.bridge = VoskBridge(self.uri, self.extra_headers, self.on_message)
