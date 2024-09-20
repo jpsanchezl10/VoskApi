@@ -2,7 +2,6 @@ vosk==0.3.44
 websockets==13.0.1
 python-dotenv==1.0.1
 fastapi==0.115.0
-gunicorn~=22.0.0
 pydantic==2.6.4
 starlette==0.38.5
 numpy==1.26.4
