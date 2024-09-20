@@ -1,1 +1,1 @@
-web: python3 -m uvicorn application:application --timeout-keep-alive 1200 --workers=${WEB_WORKERS:-1}
+web: python3 -m uvicorn application:application --workers=${WEB_WORKERS:-1}
