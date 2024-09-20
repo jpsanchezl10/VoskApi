@@ -59,18 +59,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
         connection = VoskConnection(websocket, language)
         await connection.start()
-        
+
     except Exception as e:
         logger.error(f"Error in websocket_endpoint: {str(e)}")
         await websocket.close()
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(application, host="0.0.0.0", port=PORT, 
-                log_level="info", 
-                timeout_keep_alive=300,
-                limit_max_requests=0,
-                websocket_ping_interval=30,
-                websocket_ping_timeout=300,
-                websocket_max_size=10 * 1024 * 1024,
-                )
+    uvicorn.run(application, host="0.0.0.0", port=80,timeout_keep_alive=1200,workers=1)
