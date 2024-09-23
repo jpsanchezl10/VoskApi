@@ -15,7 +15,7 @@ models = {
     'es': model_es
 }
 
-class VoskConnection:
+class VoskStreamingTranscription:
     def __init__(self, websocket: WebSocket, language: str):
         self.websocket = websocket
         self.rec = vosk.KaldiRecognizer(models[language], 16000)
@@ -60,3 +60,27 @@ class VoskConnection:
             logging.error("WebSocket connection closed",exc_info=True)
         except Exception as e:
             logging.error(f"Error in VoskConnection: {str(e)}",exc_info=True)
+
+class VoskBatchTranscription:
+    def __init__(self, language: str):
+        self.rec = vosk.KaldiRecognizer(models[language], 16000)
+        self.rec.SetMaxAlternatives(1)
+
+    def transcribe(self, audio_data: bytes) -> dict:
+        if self.rec.AcceptWaveform(audio_data):
+            result = json.loads(self.rec.FinalResult())
+            alternatives = result.get("alternatives", [])
+            transcript = alternatives[0].get("text", "") if alternatives else ""
+            confidence = alternatives[0].get("confidence", 0) if alternatives else 0
+            
+            return {
+                "duration": result.get("duration", 0.0),
+                "is_final": True,
+                "speech_final": True,
+                "channel": {
+                    "alternatives": [
+                        {"transcript": transcript, "confidence": confidence}
+                    ]
+                }
+            }
+        return {"error": "Failed to transcribe audio"}
