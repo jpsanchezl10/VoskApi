@@ -72,8 +72,9 @@ async def websocket_endpoint(websocket: WebSocket):
 async def transcribe_full_audio(
     request: Request,
     language: str = None,
+    diarize: bool = False,
     authorization: str = Header(None)
-    ):
+):
     # Extract token from Authorization header
     token = authorization.split()[-1] if authorization else None
 
@@ -95,7 +96,7 @@ async def transcribe_full_audio(
             
             audio_data = wav.readframes(wav.getnframes())
 
-        transcription = VoskBatchTranscription(language)
+        transcription = VoskBatchTranscription(language, diarize)
         result = transcription.transcribe(audio_data)
 
         return JSONResponse(content=result)

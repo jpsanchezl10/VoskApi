@@ -2,6 +2,8 @@ import vosk
 import json
 from fastapi import WebSocket, WebSocketDisconnect
 import logging
+from vosk import Model, KaldiRecognizer, SpkModel
+import numpy as np
 
 # Load models
 VOSK_MODEL_PATH_EN = './src/models/small/vosk-model-small-en-us-0.15'
@@ -61,10 +63,31 @@ class VoskStreamingTranscription:
         except Exception as e:
             logging.error(f"Error in VoskConnection: {str(e)}",exc_info=True)
 
+
+
+
+
 class VoskBatchTranscription:
-    def __init__(self, language: str):
+    def __init__(self, language: str, diarize: bool = False):
+   
+        # Initialize the recognizer
         self.rec = vosk.KaldiRecognizer(models[language], 16000)
         self.rec.SetMaxAlternatives(1)
+
+        # Load and set the speaker model if diarization is requested
+        if diarize:
+            try:
+                # Paths to models
+                SPK_MODEL_PATH = "./src/models/speaker_identification/vosk-model-spk-0.4"
+
+                #init the model
+                self.spk_model = SpkModel(SPK_MODEL_PATH)
+                self.rec.SetSpkModel(self.spk_model)
+            except Exception as e:
+                print(f"Error loading speaker model: {str(e)}")
+                raise
+
+        self.diarize = diarize
 
     def transcribe(self, audio_data: bytes) -> dict:
         if self.rec.AcceptWaveform(audio_data):
@@ -73,7 +96,7 @@ class VoskBatchTranscription:
             transcript = alternatives[0].get("text", "") if alternatives else ""
             confidence = alternatives[0].get("confidence", 0) if alternatives else 0
             
-            return {
+            response = {
                 "duration": result.get("duration", 0.0),
                 "is_final": True,
                 "speech_final": True,
@@ -83,4 +106,18 @@ class VoskBatchTranscription:
                     ]
                 }
             }
+            
+            if self.diarize and "spk" in result:
+                response["speaker"] = {
+                    "x_vector": result["spk"],
+                    "frames": result.get("spk_frames", 0)
+                }
+            
+            return response
         return {"error": "Failed to transcribe audio"}
+
+    @staticmethod
+    def cosine_dist(x, y):
+        nx = np.array(x)
+        ny = np.array(y)
+        return 1 - np.dot(nx, ny) / np.linalg.norm(nx) / np.linalg.norm(ny)
