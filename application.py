@@ -48,7 +48,7 @@ def authenticate(token: str):
     return token == VOSK_API_KEY
 
 
-@application.websocket("/v1/transcribe")
+@application.websocket("/v1/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
@@ -68,41 +68,41 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.close()
 
 
-# @application.post("/v1/transcribe")
-# async def transcribe_full_audio(
-#     request: Request,
-#     language: str = None,
-#     authorization: str = Header(None)
-#     ):
-#     # Extract token from Authorization header
-#     token = authorization.split()[-1] if authorization else None
+@application.post("/v1/transcribe")
+async def transcribe_full_audio(
+    request: Request,
+    language: str = None,
+    authorization: str = Header(None)
+    ):
+    # Extract token from Authorization header
+    token = authorization.split()[-1] if authorization else None
 
-#     if not token or not authenticate(token):
-#         raise HTTPException(status_code=401, detail="Unauthorized")
+    if not token or not authenticate(token):
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
-#     # Get language from query parameters, defaulting to 'en'
-#     language = language or 'en'
-#     if language not in ['en', 'es']:
-#         raise HTTPException(status_code=400, detail="Unsupported language")
+    # Get language from query parameters, defaulting to 'en'
+    language = language or 'en'
+    if language not in ['en', 'es']:
+        raise HTTPException(status_code=400, detail="Unsupported language")
 
-#     try:
-#         # Read raw binary data from the request body
-#         contents = await request.body()
+    try:
+        # Read raw binary data from the request body
+        contents = await request.body()
 
-#         with io.BytesIO(contents) as buf, wave.open(buf, 'rb') as wav:
-#             if wav.getnchannels() != 1 or wav.getsampwidth() != 2 or wav.getframerate() != 16000:
-#                 return JSONResponse(status_code=400, content={"error": "Audio must be 16kHz mono PCM"})
+        with io.BytesIO(contents) as buf, wave.open(buf, 'rb') as wav:
+            if wav.getnchannels() != 1 or wav.getsampwidth() != 2 or wav.getframerate() != 16000:
+                return JSONResponse(status_code=400, content={"error": "Audio must be 16kHz mono PCM"})
             
-#             audio_data = wav.readframes(wav.getnframes())
+            audio_data = wav.readframes(wav.getnframes())
 
-#         transcription = VoskBatchTranscription(language)
-#         result = transcription.transcribe(audio_data)
+        transcription = VoskBatchTranscription(language)
+        result = transcription.transcribe(audio_data)
 
-#         return JSONResponse(content=result)
+        return JSONResponse(content=result)
 
-#     except Exception as e:
-#         logging.error(f"Error in transcribe_full_audio: {str(e)}", exc_info=True)
-#         return JSONResponse(status_code=500, content={"error": "Internal server error"})
+    except Exception as e:
+        logging.error(f"Error in transcribe_full_audio: {str(e)}", exc_info=True)
+        return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
 if __name__ == '__main__':
     import uvicorn
