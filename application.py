@@ -59,8 +59,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
         # Get language from query parameters
         language = websocket.query_params.get("language", "en")
+        model = websocket.query_params.get("model","small")
 
-        connection = VoskStreamingTranscription(websocket, language)
+        connection = VoskStreamingTranscription(websocket, language,size=model)
         await connection.start()
 
     except Exception as e:
@@ -72,6 +73,7 @@ async def websocket_endpoint(websocket: WebSocket):
 async def transcribe_full_audio(
     request: Request,
     language: str = None,
+    model: str = None,
     diarize: bool = False,
     authorization: str = Header(None)
 ):
@@ -96,7 +98,7 @@ async def transcribe_full_audio(
             
             audio_data = wav.readframes(wav.getnframes())
 
-        transcription = VoskBatchTranscription(language, diarize)
+        transcription = VoskBatchTranscription(language, diarize,size=model)
         result = transcription.transcribe(audio_data)
 
         return JSONResponse(content=result)

@@ -17,7 +17,7 @@ RATE = 16000
 
 class VoskClient:
     def __init__(self):
-        self.uri = "ws://localhost/v1?language=en"
+        self.uri = "ws://localhost/v1/stream?language=en"
         self.extra_headers = {
             'Authorization': f'Token {VOSK_API_KEY}'
         }
@@ -27,10 +27,12 @@ class VoskClient:
         result = json.loads(message)
         sentence = result['channel']['alternatives'][0]['transcript']
         confidence = result['channel']['alternatives'][0]['confidence']
+        duration = result['duration']
         if len(sentence) == 0:
             return
         if result['is_final']:
             print("Final: ", sentence)
+            print("duration ",duration)
             print(confidence)
         else:
             #print(f"Interim: ", sentence)

@@ -11,24 +11,43 @@ VOSK_MODEL_PATH_EN_MED = './src/models/med/vosk-model-en-us-daanzu-20200905'
 VOSK_MODEL_PATH_EN_SMALL = './src/models/small/vosk-model-small-en-us-0.15'
 VOSK_MODEL_PATH_ES_SMALL = './src/models/small/vosk-model-small-es-0.42'
 
-try:
-    model_en = Model(VOSK_MODEL_PATH_EN_MED)
-except:
-    logging.error("Failed to Import MED VOSK model , importing small instead")
-    model_en = Model(VOSK_MODEL_PATH_EN_SMALL)
 
-model_es = Model(VOSK_MODEL_PATH_ES_SMALL)
-
-models = {
-    'en': model_en,
-    'es': model_es
+en_models = {
+    'small': Model(VOSK_MODEL_PATH_EN_SMALL),
+    'medium': Model(VOSK_MODEL_PATH_EN_MED)
 }
 
+es_models = {
+    'small': Model(VOSK_MODEL_PATH_ES_SMALL),
+    'medium': Model(VOSK_MODEL_PATH_ES_SMALL)
+}
+
+models = {
+    'en': en_models,
+    'es': es_models
+}
+
+def get_model(language, size):
+    lang_models = models.get(language)
+    
+    if lang_models:
+        # Try to get the specific size model, return None if not found
+        return lang_models.get(size, None)
+    return None
 
 class VoskStreamingTranscription:
-    def __init__(self, websocket: WebSocket, language: str):
+    def __init__(self, websocket: WebSocket, language: str,size:str = "small"):
         self.websocket = websocket
-        self.rec = KaldiRecognizer(models[language], 16000)
+
+
+        model = get_model(language=language,size=size)
+
+        if model:
+            self.rec = KaldiRecognizer(model, 16000)
+        else:
+            self.rec = KaldiRecognizer(Model(VOSK_MODEL_PATH_EN_SMALL),16000)
+  
+    
         self.rec.SetMaxAlternatives(1)
         self.start_time = None
 
@@ -80,9 +99,16 @@ class VoskStreamingTranscription:
 
 
 class VoskBatchTranscription:
-    def __init__(self, language: str, diarize: bool = False):
+    def __init__(self, language: str, diarize: bool = False,size: str = "small"):
         # Initialize the recognizer
-        self.rec = KaldiRecognizer(models[language], 16000)
+
+        model = get_model(language=language,size=size)
+
+        if model:
+            self.rec = KaldiRecognizer(model, 16000)
+        else:
+            self.rec = KaldiRecognizer(Model(VOSK_MODEL_PATH_EN_SMALL),16000)
+            
         self.rec.SetMaxAlternatives(1)
         # Load and set the speaker model if diarization is requested
         if diarize:
