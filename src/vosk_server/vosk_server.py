@@ -6,20 +6,22 @@ import numpy as np
 import logging
 import time
 
-# Load models
-VOSK_MODEL_PATH_EN_MED = './src/models/med/vosk-model-en-us-daanzu-20200905'
-VOSK_MODEL_PATH_EN_SMALL = './src/models/small/vosk-model-small-en-us-0.15'
-VOSK_MODEL_PATH_ES_SMALL = './src/models/small/vosk-model-small-es-0.42'
+# EN models
+VOSK_MODEL_EN_SMALL = Model('./src/models/small/vosk-model-small-en-us-0.15')
+VOSK_MODEL_EN_MED = Model('./src/models/med/vosk-model-en-us-daanzu-20200905')
+
+#ES Models
+VOSK_MODEL_ES_SMALL = Model( './src/models/small/vosk-model-small-es-0.42')
 
 
 en_models = {
-    'small': Model(VOSK_MODEL_PATH_EN_SMALL),
-    'medium': Model(VOSK_MODEL_PATH_EN_MED)
+    'small': VOSK_MODEL_EN_SMALL,
+    'medium': VOSK_MODEL_EN_MED
 }
 
 es_models = {
-    'small': Model(VOSK_MODEL_PATH_ES_SMALL),
-    'medium': Model(VOSK_MODEL_PATH_ES_SMALL)
+    'small':VOSK_MODEL_ES_SMALL,
+    'medium': VOSK_MODEL_ES_SMALL 
 }
 
 models = {
