@@ -17,7 +17,7 @@ RATE = 16000
 
 class VoskClient:
     def __init__(self):
-        self.uri = "ws://localhost/v1/stream?language=en"
+        self.uri = "wss://vosk.virtualscale.xyz/v1/stream?language=en&model=small"
         self.extra_headers = {
             'Authorization': f'Token {VOSK_API_KEY}'
         }

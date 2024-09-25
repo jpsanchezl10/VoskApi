@@ -58,15 +58,14 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.close(code=1008)
             return
 
-        # Get language from query parameters
         language = websocket.query_params.get("language", "en")
-        model = websocket.query_params.get("model","small")
+        model = websocket.query_params.get("model", "small")
 
-        connection = VoskStreamingTranscription(websocket, language,size=model)
+        connection = VoskStreamingTranscription(websocket, language, size=model)
         await connection.start()
 
     except Exception as e:
-        logger.error(f"Error in websocket_endpoint: {str(e)}")
+        logging.error(f"Error in websocket_endpoint: {str(e)}")
         await websocket.close()
 
 
@@ -102,7 +101,7 @@ async def transcribe_full_audio(
         transcription = VoskBatchTranscription(language, diarize,size=model)
 
         
-        result = await asyncio.create_task(transcription.transcribe(audio_data))
+        result = await transcription.transcribe(audio_data)
 
         return JSONResponse(content=result)
 

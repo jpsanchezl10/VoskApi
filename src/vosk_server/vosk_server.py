@@ -3,7 +3,6 @@ from fastapi import WebSocket, WebSocketDisconnect
 import logging
 from vosk import Model, KaldiRecognizer, SpkModel
 import numpy as np
-import logging
 import time
 import asyncio
 
@@ -14,14 +13,13 @@ VOSK_MODEL_EN_MED = Model('./src/models/med/vosk-model-en-us-daanzu-20200905')
 #ES Models
 VOSK_MODEL_ES_SMALL = Model( './src/models/small/vosk-model-small-es-0.42')
 
-
 en_models = {
     'small': VOSK_MODEL_EN_SMALL,
     'medium': VOSK_MODEL_EN_MED
 }
 
 es_models = {
-    'small':VOSK_MODEL_ES_SMALL,
+    'small': VOSK_MODEL_ES_SMALL,
     'medium': VOSK_MODEL_ES_SMALL 
 }
 
@@ -39,18 +37,13 @@ def get_model(language, size):
     return None
 
 class VoskStreamingTranscription:
-    def __init__(self, websocket: WebSocket, language: str,size:str = "small"):
+    def __init__(self, websocket: WebSocket, language: str, size: str = "small"):
         self.websocket = websocket
-
-
-        model = get_model(language=language,size=size)
-
+        model = get_model(language=language, size=size)
         if model:
             self.rec = KaldiRecognizer(model, 16000)
         else:
-            self.rec = KaldiRecognizer(VOSK_MODEL_EN_SMALL,16000)
-  
-    
+            self.rec = KaldiRecognizer(VOSK_MODEL_EN_SMALL, 16000)
         self.rec.SetMaxAlternatives(1)
         self.start_time = None
 
@@ -60,16 +53,22 @@ class VoskStreamingTranscription:
                 audio_data = await self.websocket.receive_bytes()
                 self.start_time = time.time()
                 
-                result = await asyncio.create_task(self.process_audio(audio_data))
+                # Process audio in a separate task
+                result = await self.process_audio(audio_data)
                 
                 await self.websocket.send_json(result)
-
         except WebSocketDisconnect:
-            logging.error("WebSocket connection closed",exc_info=True)
+            logging.error("WebSocket connection closed", exc_info=True)
         except Exception as e:
-            logging.error(f"Error in VoskConnection: {str(e)}",exc_info=True)
-    
+            logging.error(f"Error in VoskConnection: {str(e)}", exc_info=True)
+
     async def process_audio(self, audio_data):
+        # Run CPU-bound task in a thread pool
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, self._process_audio_sync, audio_data)
+        return result
+
+    def _process_audio_sync(self, audio_data):
         if self.rec.AcceptWaveform(audio_data):
             result = json.loads(self.rec.Result())
             alternatives = result.get("alternatives", [])
@@ -103,19 +102,13 @@ class VoskStreamingTranscription:
                 }
             }
 
-
-
-
 class VoskBatchTranscription:
-    def __init__(self, language: str, diarize: bool = False,size: str = "small"):
-        # Initialize the recognizer
-
-        model = get_model(language=language,size=size)
-
+    def __init__(self, language: str, diarize: bool = False, size: str = "small"):
+        model = get_model(language=language, size=size)
         if model:
             self.rec = KaldiRecognizer(model, 16000)
         else:
-            self.rec = KaldiRecognizer(VOSK_MODEL_EN_SMALL,16000)
+            self.rec = KaldiRecognizer(VOSK_MODEL_EN_SMALL, 16000)
             
         self.rec.SetMaxAlternatives(1)
         # Load and set the speaker model if diarization is requested
@@ -132,6 +125,12 @@ class VoskBatchTranscription:
         self.diarize = diarize
 
     async def transcribe(self, audio_data: bytes) -> dict:
+        # Run CPU-bound task in a thread pool
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, self._transcribe_sync, audio_data)
+        return result
+
+    def _transcribe_sync(self, audio_data: bytes) -> dict:
         start_time = time.time()
         if self.rec.AcceptWaveform(audio_data):
             result = json.loads(self.rec.FinalResult())
