@@ -47,7 +47,7 @@ class VoskStreamingTranscription:
         if model:
             self.rec = KaldiRecognizer(model, 16000)
         else:
-            self.rec = KaldiRecognizer(Model(VOSK_MODEL_PATH_EN_SMALL),16000)
+            self.rec = KaldiRecognizer(VOSK_MODEL_EN_SMALL,16000)
   
     
         self.rec.SetMaxAlternatives(1)
@@ -109,7 +109,7 @@ class VoskBatchTranscription:
         if model:
             self.rec = KaldiRecognizer(model, 16000)
         else:
-            self.rec = KaldiRecognizer(Model(VOSK_MODEL_PATH_EN_SMALL),16000)
+            self.rec = KaldiRecognizer(VOSK_MODEL_EN_SMALL,16000)
             
         self.rec.SetMaxAlternatives(1)
         # Load and set the speaker model if diarization is requested
