@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+src/models/med/*
+!src/models/med/.gitkeep
+src/models/big/*
+!src/models/big/.gitkeep
+
 # C extensions
 *.so
 
@@ -122,7 +127,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
