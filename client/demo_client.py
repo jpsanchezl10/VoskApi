@@ -25,6 +25,9 @@ class VoskClient:
 
     async def on_message(self, message):
         result = json.loads(message)
+        if result is None:
+            print("result is None")
+            return
         sentence = result['channel']['alternatives'][0]['transcript']
         confidence = result['channel']['alternatives'][0]['confidence']
         duration = result['duration']
