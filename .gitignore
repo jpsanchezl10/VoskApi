@@ -8,6 +8,8 @@ src/models/med/*
 src/models/big/*
 !src/models/big/.gitkeep
 
+!src/models/med/readme.txt
+
 # C extensions
 *.so
 
