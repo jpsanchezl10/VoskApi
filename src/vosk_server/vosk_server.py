@@ -5,6 +5,7 @@ from vosk import Model, KaldiRecognizer, SpkModel
 import numpy as np
 import logging
 import time
+import asyncio
 
 # EN models
 VOSK_MODEL_EN_SMALL = Model('./src/models/small/vosk-model-small-en-us-0.15')
@@ -59,43 +60,48 @@ class VoskStreamingTranscription:
                 audio_data = await self.websocket.receive_bytes()
                 self.start_time = time.time()
                 
-                if self.rec.AcceptWaveform(audio_data):
-                    result = json.loads(self.rec.Result())
-                    alternatives = result.get("alternatives", [])
-                    transcript = alternatives[0].get("text", "") if alternatives else ""
-                    confidence = alternatives[0].get("confidence", 0) if alternatives else 0
-                    if transcript:
-                        elapsed_time = time.time() - self.start_time
-                        response = {
-                            "duration": elapsed_time,
-                            "start": result.get("start", 0.0),
-                            "is_final": True,
-                            "speech_final": True,
-                            "channel": {
-                                "alternatives": [
-                                    {"transcript": transcript, "confidence": confidence}
-                                ]
-                            }
-                        }
-                else:
-                    partial = json.loads(self.rec.PartialResult())
-                    elapsed_time = time.time() - self.start_time
-                    response = {
-                        "duration": elapsed_time,
-                        "start": 0.0,
-                        "is_final": False,
-                        "speech_final": False,
-                        "channel": {
-                            "alternatives": [
-                                {"transcript": partial.get("partial", ""), "confidence": 0}
-                            ]
-                        }
-                    }
-                await self.websocket.send_json(response)
+                result = await asyncio.create_task(self.process_audio(audio_data))
+                
+                await self.websocket.send_json(result)
+
         except WebSocketDisconnect:
             logging.error("WebSocket connection closed",exc_info=True)
         except Exception as e:
             logging.error(f"Error in VoskConnection: {str(e)}",exc_info=True)
+    
+    async def process_audio(self, audio_data):
+        if self.rec.AcceptWaveform(audio_data):
+            result = json.loads(self.rec.Result())
+            alternatives = result.get("alternatives", [])
+            transcript = alternatives[0].get("text", "") if alternatives else ""
+            confidence = alternatives[0].get("confidence", 0) if alternatives else 0
+            if transcript:
+                elapsed_time = time.time() - self.start_time
+                return {
+                    "duration": elapsed_time,
+                    "start": result.get("start", 0.0),
+                    "is_final": True,
+                    "speech_final": True,
+                    "channel": {
+                        "alternatives": [
+                            {"transcript": transcript, "confidence": confidence}
+                        ]
+                    }
+                }
+        else:
+            partial = json.loads(self.rec.PartialResult())
+            elapsed_time = time.time() - self.start_time
+            return {
+                "duration": elapsed_time,
+                "start": 0.0,
+                "is_final": False,
+                "speech_final": False,
+                "channel": {
+                    "alternatives": [
+                        {"transcript": partial.get("partial", ""), "confidence": 0}
+                    ]
+                }
+            }
 
 
 
@@ -125,7 +131,7 @@ class VoskBatchTranscription:
                 raise
         self.diarize = diarize
 
-    def transcribe(self, audio_data: bytes) -> dict:
+    async def transcribe(self, audio_data: bytes) -> dict:
         start_time = time.time()
         if self.rec.AcceptWaveform(audio_data):
             result = json.loads(self.rec.FinalResult())

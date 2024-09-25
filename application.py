@@ -10,6 +10,7 @@ from src.vosk_server.vosk_server import VoskStreamingTranscription,VoskBatchTran
 import io
 import wave
 from fastapi.responses import JSONResponse
+import asyncio
 
 
 load_dotenv()
@@ -99,7 +100,9 @@ async def transcribe_full_audio(
             audio_data = wav.readframes(wav.getnframes())
 
         transcription = VoskBatchTranscription(language, diarize,size=model)
-        result = transcription.transcribe(audio_data)
+
+        
+        result = await asyncio.create_task(transcription.transcribe(audio_data))
 
         return JSONResponse(content=result)
 
