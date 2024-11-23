@@ -1,6 +1,6 @@
 # Vosk API: Free and Scalable Speech Recognition Alternative to Deepgram
 
-The Vosk API offers a **free** and highly scalable speech-to-text solution, serving as an excellent alternative to Deepgram. This project uses **Vosk API** alongside **Starlette WebSockets**, enabling **real-time transcription** for over 100 concurrent requests (machine-dependent). You can select between **small** and **medium** models to balance **accuracy** and **performance** based on your needs.
+The Vosk API offers a **free** and highly scalable speech-to-text solution, serving as an excellent alternative to Deepgram. This project uses **Vosk Toolkit** alongside **Starlette WebSockets**, enabling **real-time transcription** for over 100 concurrent requests (machine-dependent). You can select between **small** and **medium** models to balance **accuracy** and **performance** based on your needs.
 
 ## Features
 
