@@ -16,8 +16,8 @@ The Vosk API offers a **free** and highly scalable speech-to-text solution, serv
 1. Clone the repository:
 
    ```bash
-   git clone <your-repo-url>
-   cd <your-repo-name>
+   git clone https://github.com/jpsanchezl10/VoskApi.git
+   cd VoskApi
    ```
 
 2. Install dependencies:
