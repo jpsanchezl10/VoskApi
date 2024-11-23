@@ -61,7 +61,7 @@ async def on_message(message):
 
 async def main():
     bridge = VoskBridge(
-        uri="wss://vosk.virtualscale.xyz/v1/stream?language=en&model=medium",
+        uri="ws://localhost/v1/stream?language=en&model=medium",
         extra_headers={'Authorization': f'Token YOUR_API_KEY'},
         on_message=on_message
     )
@@ -90,7 +90,7 @@ In your app, create a `VoskBridge` instance and start it as an asynchronous task
 
 ```python
 bridge = VoskBridge(
-    uri=f"wss://vosk.virtualscale.xyz/v1/stream?language=en&model=small",
+    uri=f"ws://localhost/v1/stream?language=en&model=small",
     extra_headers={'Authorization': f'Token {VOSK_API_KEY}'},
     on_message=on_message
 )
