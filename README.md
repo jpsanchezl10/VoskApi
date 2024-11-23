@@ -173,3 +173,5 @@ class VoskBridge:
     async def run(self):
         await self.start()
 ```
+**Default API KEY*
+```sk-lkjfdhfihjsdhfnnser93hklfdlsknfjsdlfakfjuiafyu23080ahkjndfnbsckerpeproyita9837```
