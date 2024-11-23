@@ -104,3 +104,72 @@ Close the connection when done:
 ```python
 await bridge.close()
 ```
+
+
+### `VoskBridge` Class Example
+```python
+import asyncio
+import websockets
+import logging
+
+class VoskBridge:
+    def __init__(self, uri, extra_headers, on_message):
+        self.uri = uri
+        self.extra_headers = extra_headers
+        self._on_message = on_message
+        self.websocket = None
+        self._queue = asyncio.Queue()
+        self._ended = False
+
+    async def connect(self):
+        logging.info("Connecting to Vosk WebSocket")
+        self.websocket = await websockets.connect(self.uri, extra_headers=self.extra_headers)
+        logging.info("Connected to Vosk WebSocket")
+
+    async def start(self):
+        await self.connect()
+        logging.info("Starting Vosk bridge")
+        send_task = asyncio.create_task(self.send_audio_stream())
+        receive_task = asyncio.create_task(self.receive_message_stream())
+        await asyncio.gather(send_task, receive_task)
+
+    async def send_audio_stream(self):
+        logging.info("Starting audio stream sending")
+        try:
+            while not self._ended:
+                chunk = await self._queue.get()
+                if chunk is None:
+                    break
+                await self.websocket.send(chunk)
+                self._queue.task_done()
+        except Exception as e:
+            logging.error(f"Error in send_audio_stream: {e}")
+        finally:
+            logging.info("Finished sending audio stream")
+
+    async def receive_message_stream(self):
+        logging.info("Starting message receiving stream")
+        try:
+            while not self._ended:
+                message = await self.websocket.recv()
+                await self._on_message(message)
+        except websockets.exceptions.ConnectionClosed:
+            logging.info("WebSocket connection closed")
+        except Exception as e:
+            logging.error(f"Error in receive_message_stream: {e}")
+        finally:
+            logging.info("Finished receiving message stream")
+
+    def add_request(self, buffer):
+        self._queue.put_nowait(buffer)
+
+    async def close(self):
+        self._ended = True
+        await self._queue.put(None)  # Signal to end the send_audio_stream
+        if self.websocket:
+            await self.websocket.close()
+        logging.info("Vosk bridge closed")
+
+    async def run(self):
+        await self.start()
+```
