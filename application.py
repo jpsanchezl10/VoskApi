@@ -11,7 +11,7 @@ import io
 import wave
 from fastapi.responses import JSONResponse
 import asyncio
-
+import base64
 
 load_dotenv()
 
@@ -53,11 +53,15 @@ def authenticate(token: str):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
-        token = websocket.headers.get("Authorization")
-        if not token or not authenticate(token.split()[-1]):
+        
+        authorization = websocket.query_params.get("authorization", None)
+
+        token = base64.b64decode(authorization).decode("utf-8")
+
+        if not token or not authenticate(token):
             await websocket.close(code=1008)
             return
-
+                
         language = websocket.query_params.get("language", "en")
         model = websocket.query_params.get("model", "small")
 
