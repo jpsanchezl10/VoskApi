@@ -8,14 +8,14 @@ import asyncio
 
 # EN models
 VOSK_MODEL_EN_SMALL = Model('./src/models/small/vosk-model-small-en-us-0.15')
-VOSK_MODEL_EN_MED = Model('./src/models/med/vosk-model-en-us-daanzu-20200905')
+# VOSK_MODEL_EN_MED = Model('./src/models/med/vosk-model-en-us-daanzu-20200905')
 
 #ES Models
 VOSK_MODEL_ES_SMALL = Model( './src/models/small/vosk-model-small-es-0.42')
 
 en_models = {
     'small': VOSK_MODEL_EN_SMALL,
-    'medium': VOSK_MODEL_EN_MED
+    'medium': VOSK_MODEL_EN_SMALL
 }
 
 es_models = {
